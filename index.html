@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14213d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Carnet de bord">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Carnet de bord Directique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0;min-height:100%}
+
+/* Mise en page : une colonne étroite pensée pour iPhone, liste des trajets puis formulaire en deux blocs (retrait, restitution) */
+:root{
+  --bg:#edf0f4; --surface:#ffffff; --surface2:#f4f6f9; --ink:#14213d; --muted:#56637a; --line:#d3dae4;
+  --accent:#1f4fd8; --accent-ink:#ffffff; --amber:#c27a00; --amber-bg:#fff1d0; --ok:#1a8a4a; --ok-bg:#d9f3e4; --bad:#c43b3b;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif; --f-body:"Barlow",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b111d; --surface:#141d2f; --surface2:#0f1727; --ink:#e8edf6; --muted:#9aa8c0; --line:#26344d;
+  --accent:#6d8fff; --accent-ink:#0a1020; --amber:#f0b44a; --amber-bg:#3a2c0d; --ok:#4fd48a; --ok-bg:#12331f; --bad:#ff7b7b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b111d; --surface:#141d2f; --surface2:#0f1727; --ink:#e8edf6; --muted:#9aa8c0; --line:#26344d;
+  --accent:#6d8fff; --accent-ink:#0a1020; --amber:#f0b44a; --amber-bg:#3a2c0d; --ok:#4fd48a; --ok-bg:#12331f; --bad:#ff7b7b; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 17px/1.45 var(--f-body);padding-block:18px 110px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:2.4rem;line-height:1}
+h2{font-size:1.5rem}
+.sub{color:var(--muted);font-size:.95rem;margin:4px 0 0}
+button{font-family:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn{font:600 1rem var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:12px 16px;border-radius:10px;cursor:pointer;min-height:46px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.small{min-height:38px;padding:8px 12px;font-size:.92rem}
+.bar{display:flex;gap:10px;flex-wrap:wrap}
+.bar .grow{flex:1 1 160px}
+
+.list{display:flex;flex-direction:column;gap:10px}
+.trip{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:8px;text-align:left;width:100%;color:inherit;cursor:pointer;font:inherit}
+.trip-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.trip b{font:700 1.25rem/1.1 var(--f-display);letter-spacing:.02em}
+.pill{font:600 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;padding:4px 9px;border-radius:99px;white-space:nowrap}
+.pill.run{background:var(--amber-bg);color:var(--amber)}.pill.done{background:var(--ok-bg);color:var(--ok)}
+.route{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;font-size:.93rem;color:var(--muted)}
+.route span:nth-child(odd){font:600 .7rem var(--f-body);letter-spacing:.08em;text-transform:uppercase;padding-top:3px}
+.route span:nth-child(even){color:var(--ink);overflow-wrap:anywhere}
+.stats{display:flex;flex-wrap:wrap;gap:6px 14px;font:500 .85rem var(--f-mono);color:var(--muted)}
+.stats b{font:inherit;color:var(--ink)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:22px 18px;display:flex;flex-direction:column;gap:10px}
+.empty p{margin:0;color:var(--muted)}
+
+.export{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.export .dates{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.sec-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld>label,.lab{font:600 .72rem var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+input,textarea{font:400 17px var(--f-body);color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:9px;padding:11px 12px;width:100%;min-width:0;min-height:46px}
+input[type=number]{font-family:var(--f-mono);font-weight:500}
+textarea{min-height:84px;resize:vertical}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;min-height:44px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:9px;font:600 .95rem var(--f-body);cursor:pointer;padding:6px 2px}
+.seg button[aria-checked="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--amber);transition:width .25s}
+.sigwrap{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+canvas{display:block;width:100%;height:150px;touch-action:none;background:#fff}
+.hint{font-size:.85rem;color:var(--muted);margin:0}
+.warn{background:var(--amber-bg);color:var(--amber);border-radius:9px;padding:9px 12px;font-size:.92rem}
+.err{color:var(--bad);font-size:.92rem;margin:0}
+
+.fixed{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:10px max(16px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));z-index:5}
+.fixed .bar{max-width:640px;margin:0 auto}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:.93rem;z-index:10;max-width:90%}
+.foot{font-size:.82rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="v-list">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <h1>Carnet de bord</h1>
+        <p class="sub">Véhicule de société · Directique</p>
+      </div>
+      <div class="bar"><button class="btn primary grow" id="new">Nouveau trajet</button></div>
+      <div class="list" id="list"></div>
+      <div class="export" id="export">
+        <h2>Exporter en Excel</h2>
+        <div class="dates">
+          <div class="fld"><label for="x-from">Du</label><input type="date" id="x-from"></div>
+          <div class="fld"><label for="x-to">Au</label><input type="date" id="x-to"></div>
+        </div>
+        <button class="btn primary" id="xlsx">Télécharger le fichier .xlsx</button>
+        <p class="hint" id="xhint">Sans dates, tous les trajets sont exportés, avec la signature.</p>
+      </div>
+      <div class="export">
+        <h2>Sauvegarde</h2>
+        <p class="hint">Les données restent sur l'appareil. Gardez une copie pour ne rien perdre en cas de changement de téléphone.</p>
+        <div class="bar"><button class="btn grow" id="bk-save" type="button">Sauvegarder</button><label class="btn grow" style="text-align:center">Restaurer<input type="file" id="bk-load" accept="application/json,.json" hidden></label></div>
+      </div>
+      <p class="foot" id="where"></p>
+      <p class="foot">D'après la charte d'utilisation des véhicules (PS01, version 03) : pour un véhicule de société, le carnet de bord se remplit chaque jour. Rappel : plein de carburant avant restitution, véhicule restitué propre, jamais de véhicule gardé le week-end.</p>
+    </div>
+  </div>
+
+  <div id="v-form" hidden>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <h1 id="f-title">Nouveau trajet</h1>
+      <div class="sec">
+        <div class="grid2">
+          <div class="fld"><label for="f-nom">Nom</label><input id="f-nom" autocomplete="name" placeholder="Prénom Nom"></div>
+          <div class="fld"><label for="f-mission">Code mission</label><input id="f-mission" autocapitalize="characters" placeholder="ex. GET401"></div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec-r">
+        <div class="sec-head"><h2>Retrait du véhicule</h2><button class="btn small" id="r-now" type="button">Maintenant</button></div>
+        <div class="fld"><label for="r-lieu">Lieu du retrait</label><input id="r-lieu" placeholder="Agence ou adresse"></div>
+        <div class="grid2">
+          <div class="fld"><label for="r-date">Date</label><input type="date" id="r-date"></div>
+          <div class="fld"><label for="r-heure">Heure</label><input type="time" id="r-heure"></div>
+        </div>
+        <div class="fld"><label for="r-km">Kilomètres au compteur</label><input type="number" inputmode="numeric" id="r-km" placeholder="0"></div>
+        <div class="fld"><span class="lab">Jauge d'essence</span><div class="seg" role="radiogroup" aria-label="Jauge au retrait" id="r-j"></div><div class="meter"><i id="r-m"></i></div></div>
+      </div>
+
+      <div class="sec" id="sec-s">
+        <div class="sec-head"><h2>Restitution</h2><button class="btn small" id="s-now" type="button">Maintenant</button></div>
+        <p class="hint">À remplir au retour du véhicule. Vous pouvez enregistrer le trajet avant et le terminer plus tard.</p>
+        <div class="fld"><label for="s-lieu">Lieu lors de la restitution</label><input id="s-lieu" placeholder="Agence ou lieu de stationnement"></div>
+        <div class="grid2">
+          <div class="fld"><label for="s-date">Date</label><input type="date" id="s-date"></div>
+          <div class="fld"><label for="s-heure">Heure</label><input type="time" id="s-heure"></div>
+        </div>
+        <div class="fld"><label for="s-km">Kilomètres au compteur</label><input type="number" inputmode="numeric" id="s-km" placeholder="0"></div>
+        <div id="kmwarn" class="warn" hidden>Le kilométrage de restitution est inférieur à celui du retrait.</div>
+        <div class="fld"><span class="lab">Jauge d'essence</span><div class="seg" role="radiogroup" aria-label="Jauge à la restitution" id="s-j"></div><div class="meter"><i id="s-m"></i></div></div>
+        <div class="fld"><span class="lab">Lavage</span><div class="seg" role="radiogroup" aria-label="Lavage" id="lav"></div></div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-head"><h2>Signature</h2><button class="btn small" id="sig-clear" type="button">Effacer</button></div>
+        <div class="sigwrap"><canvas id="sig" aria-label="Zone de signature"></canvas></div>
+        <p class="hint">Signez avec le doigt dans le cadre.</p>
+        <div class="fld"><label for="f-rem">Remarque</label><textarea id="f-rem" placeholder="Anomalie, dégât, observation pour le service matériel…"></textarea></div>
+      </div>
+      <p class="err" id="ferr" hidden></p>
+      <div id="delzone"></div>
+    </div>
+  </div>
+</div>
+
+<div class="fixed" id="fbar" hidden><div class="bar"><button class="btn" id="cancel">Annuler</button><button class="btn primary grow" id="save">Enregistrer</button></div></div>
+<div class="toast" id="toast" hidden></div>
+
+
+<script src="exceljs.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const isoDate=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const isoTime=d=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const frDate=s=>s?s.split('-').reverse().join('/'):'';
+const GAUGE=[["0","Vide"],["25","1/4"],["50","1/2"],["75","3/4"],["100","Plein"]];
+const gLabel=v=>(GAUGE.find(g=>g[0]===String(v))||[,''])[1];
+const LAV=[["oui","Oui"],["non","Non"]];
+
+let trips=[], cur=null, store='local', sigDirty=false;
+const LS='carnet-bord-directique-v1';
+
+/* ---------- Stockage ---------- */
+function lsRead(){try{return JSON.parse(localStorage.getItem(LS)||'null')||{trips:[],last:{}}}catch(e){return {trips:[],last:{}}}}
+function lsWrite(){try{localStorage.setItem(LS,JSON.stringify({trips,last}))}catch(e){}}
+let last={};
+async function initStore(){
+  const l=lsRead(); trips=l.trips||[]; last=l.last||{}; store='local';
+  try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+}
+async function persist(t){ lsWrite(); }
+async function remove(t){ trips=trips.filter(x=>x.id!==t.id); lsWrite(); }
+
+/* ---------- Utilitaires ---------- */
+let tt=0;
+function toast(m){const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,3200)}
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=v=>v===''||v==null?null:Number(v);
+function sortKey(t){return (t.r.date||'')+(t.r.heure||'')}
+
+/* ---------- Liste ---------- */
+function renderList(){
+  const el=$('list');
+  if(!trips.length){
+    el.innerHTML=`<div class="empty"><h2>Aucun trajet pour l'instant</h2><p>Notez le retrait du véhicule avec son kilométrage et sa jauge, puis la restitution. Tout s'exporte ensuite dans un fichier Excel.</p></div>`;
+  }else{
+    el.innerHTML=[...trips].sort((a,b)=>sortKey(b).localeCompare(sortKey(a))).map(t=>{
+      const fin=!!(t.s.date&&t.s.km!=null&&t.s.km!=='');
+      const d=(fin&&t.r.km!=null)?num(t.s.km)-num(t.r.km):null;
+      return `<button class="trip" data-id="${t.id}"><div class="trip-top"><b>${esc(t.mission||'Sans code')} · ${esc(t.nom||'')}</b><span class="pill ${fin?'done':'run'}">${fin?'Restitué':'En cours'}</span></div>
+      <div class="route"><span>Retrait</span><span>${frDate(t.r.date)} ${esc(t.r.heure||'')} · ${esc(t.r.lieu||'')}</span>${t.s.date?`<span>Retour</span><span>${frDate(t.s.date)} ${esc(t.s.heure||'')} · ${esc(t.s.lieu||'')}</span>`:''}</div>
+      <div class="stats">${d!=null&&d>=0?`<span><b>${d}</b> km</span>`:''}${t.r.km!=null&&t.r.km!==''?`<span>départ <b>${t.r.km}</b></span>`:''}${t.r.jauge?`<span>jauge <b>${gLabel(t.r.jauge)}</b>${t.s.jauge?` → <b>${gLabel(t.s.jauge)}</b>`:''}</span>`:''}${t.s.lavage?`<span>lavage <b>${t.s.lavage==='oui'?'oui':'non'}</b></span>`:''}</div>
+      ${fin?'':'<div><span class="btn small" style="display:inline-block">Saisir la restitution</span></div>'}</button>`;
+    }).join('');
+    el.querySelectorAll('.trip').forEach(b=>b.onclick=()=>openForm(trips.find(t=>t.id===b.dataset.id),!b.querySelector('.pill.done')));
+  }
+  $('export').hidden=!trips.length;
+  $('where').textContent="Vos trajets sont gardés sur cet appareil uniquement. Faites régulièrement une sauvegarde ci-dessus.";
+}
+
+/* ---------- Segments ---------- */
+function buildSeg(id,opts,onchange){
+  const el=$(id); el.innerHTML=opts.map(o=>`<button type="button" role="radio" aria-checked="false" data-v="${o[0]}">${o[1]}</button>`).join('');
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{const was=b.getAttribute('aria-checked')==='true';setSeg(id,was?'':b.dataset.v);onchange&&onchange()});
+}
+function setSeg(id,v){$(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.v===String(v))))}
+function getSeg(id){const b=$(id).querySelector('[aria-checked="true"]');return b?b.dataset.v:''}
+function meter(){['r','s'].forEach(k=>{const v=getSeg(k+'-j');$(k+'-m').style.width=(v===''?0:v)+'%'})}
+
+/* ---------- Signature ---------- */
+const cv=$('sig'), ctx=cv.getContext('2d');
+function sizeCanvas(keep){
+  const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  const snap=keep&&sigDirty?cv.toDataURL():null;
+  cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.fillStyle='#fff'; ctx.fillRect(0,0,r.width,r.height);
+  ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#0b1226';
+  if(snap){const i=new Image();i.onload=()=>ctx.drawImage(i,0,0,r.width,r.height);i.src=snap}
+}
+let drawing=false;
+cv.addEventListener('pointerdown',e=>{drawing=true;cv.setPointerCapture(e.pointerId);const p=pt(e);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+.1,p.y+.1);ctx.stroke();sigDirty=true;e.preventDefault()});
+cv.addEventListener('pointermove',e=>{if(!drawing)return;const p=pt(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault()});
+['pointerup','pointercancel'].forEach(n=>cv.addEventListener(n,()=>{drawing=false}));
+function pt(e){const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+$('sig-clear').onclick=()=>{sigDirty=false;sizeCanvas(false)};
+function sigData(){
+  if(!sigDirty)return cur&&cur.signature||'';
+  const o=document.createElement('canvas');o.width=360;o.height=140;const c=o.getContext('2d');
+  c.fillStyle='#fff';c.fillRect(0,0,360,140);c.drawImage(cv,0,0,360,140);return o.toDataURL('image/png');
+}
+
+/* ---------- Formulaire ---------- */
+function show(view){ $('v-list').hidden=view!=='list'; $('v-form').hidden=view!=='form'; $('fbar').hidden=view!=='form'; window.scrollTo(0,0) }
+function openForm(t,toRestitution){
+  const isNew=!t; const now=new Date();
+  cur=t||{id:'trip_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),kind:'trip',nom:last.nom||'',mission:last.mission||'',r:{lieu:'',date:isoDate(now),heure:isoTime(now),km:'',jauge:''},s:{lieu:'',date:'',heure:'',km:'',jauge:'',lavage:''},signature:'',remarque:''};
+  cur._new=isNew;
+  $('f-title').textContent=isNew?'Nouveau trajet':'Modifier le trajet';
+  $('f-nom').value=cur.nom; $('f-mission').value=cur.mission;
+  $('r-lieu').value=cur.r.lieu; $('r-date').value=cur.r.date; $('r-heure').value=cur.r.heure; $('r-km').value=cur.r.km??''; setSeg('r-j',cur.r.jauge);
+  $('s-lieu').value=cur.s.lieu; $('s-date').value=cur.s.date; $('s-heure').value=cur.s.heure; $('s-km').value=cur.s.km??''; setSeg('s-j',cur.s.jauge); setSeg('lav',cur.s.lavage);
+  $('f-rem').value=cur.remarque||''; $('ferr').hidden=true; meter(); kmCheck();
+  $('delzone').innerHTML=isNew?'':'<button class="btn danger" id="del" type="button">Supprimer ce trajet</button>';
+  if(!isNew)$('del').onclick=askDelete;
+  sigDirty=false; show('form'); sizeCanvas(false);
+  if(cur.signature){const i=new Image();i.onload=()=>{const r=cv.getBoundingClientRect();ctx.drawImage(i,0,0,r.width,r.height)};i.src=cur.signature}
+  if(toRestitution){setTimeout(()=>{$('sec-s').scrollIntoView({block:'start'});},50);
+    if(!$('s-date').value){const n=new Date();$('s-date').value=isoDate(n);$('s-heure').value=isoTime(n)}}
+}
+function askDelete(){
+  $('delzone').innerHTML='<div class="sec"><p style="margin:0">Supprimer définitivement ce trajet ?</p><div class="bar"><button class="btn" id="d-no" type="button">Garder</button><button class="btn danger grow" id="d-yes" type="button">Oui, supprimer</button></div></div>';
+  $('d-no').onclick=()=>{$('delzone').innerHTML='<button class="btn danger" id="del" type="button">Supprimer ce trajet</button>';$('del').onclick=askDelete};
+  $('d-yes').onclick=async()=>{await remove(cur);cur=null;renderList();show('list');toast('Trajet supprimé')};
+}
+function kmCheck(){const a=num($('r-km').value),b=num($('s-km').value);$('kmwarn').hidden=!(a!=null&&b!=null&&b<a)}
+$('r-km').oninput=$('s-km').oninput=kmCheck;
+$('r-now').onclick=()=>{const n=new Date();$('r-date').value=isoDate(n);$('r-heure').value=isoTime(n)};
+$('s-now').onclick=()=>{const n=new Date();$('s-date').value=isoDate(n);$('s-heure').value=isoTime(n)};
+buildSeg('r-j',GAUGE,meter); buildSeg('s-j',GAUGE,meter); buildSeg('lav',LAV);
+$('new').onclick=()=>openForm(null,false);
+$('cancel').onclick=()=>{cur=null;show('list')};
+$('save').onclick=async()=>{
+  const e=[]; const g=id=>$(id).value.trim();
+  if(!g('f-nom'))e.push('le nom'); if(!g('f-mission'))e.push('le code mission'); if(!g('r-lieu'))e.push('le lieu du retrait'); if(!$('r-date').value)e.push('la date du retrait'); if($('r-km').value==='')e.push('le kilométrage du retrait');
+  if(e.length){const p=$('ferr');p.textContent='À compléter : '+e.join(', ')+'.';p.hidden=false;p.scrollIntoView({block:'center'});return}
+  const t=cur; delete t._new;
+  Object.assign(t,{nom:g('f-nom'),mission:g('f-mission').toUpperCase(),remarque:$('f-rem').value.trim(),signature:sigData(),
+    r:{lieu:g('r-lieu'),date:$('r-date').value,heure:$('r-heure').value,km:$('r-km').value,jauge:getSeg('r-j')},
+    s:{lieu:g('s-lieu'),date:$('s-date').value,heure:$('s-heure').value,km:$('s-km').value,jauge:getSeg('s-j'),lavage:getSeg('lav')}});
+  last={nom:t.nom,mission:t.mission};
+  if(!trips.find(x=>x.id===t.id))trips.push(t);
+  $('save').disabled=true; await persist(t); $('save').disabled=false;
+  cur=null; renderList(); show('list'); toast('Trajet enregistré');
+};
+
+/* ---------- Export Excel ---------- */
+function utc(date,time){if(!date)return null;const [y,m,d]=date.split('-').map(Number);const [h,mi]=(time||'0:0').split(':').map(Number);return new Date(Date.UTC(y,m-1,d,h||0,mi||0))}
+async function exportXlsx(){
+  if(!window.ExcelJS){toast("Le module Excel n'a pas pu se charger. Vérifiez la connexion.");return}
+  const from=$('x-from').value,to=$('x-to').value;
+  const list=trips.filter(t=>(!from||t.r.date>=from)&&(!to||t.r.date<=to)).sort((a,b)=>sortKey(a).localeCompare(sortKey(b)));
+  if(!list.length){toast('Aucun trajet sur cette période.');return}
+  const wb=new ExcelJS.Workbook(); wb.creator='Carnet de bord Directique';
+  const ws=wb.addWorksheet('Carnet de bord',{views:[{state:'frozen',ySplit:2}]});
+  const H=['NOM','CODE MISSION','LIEU DU RETRAIT','DATE ET HEURE DU RETRAIT','KILOMÈTRE AU MOMENT DU RETRAIT','JAUGE ESSENCE AU MOMENT DU RETRAIT','LIEU LORS DE LA RESTITUTION','DATE ET HEURE LORS DE LA RESTITUTION','KILOMÈTRE LORS DE LA RESTITUTION','JAUGE ESSENCE LORS DE LA RESTITUTION','LAVAGE','SIGNATURE','REMARQUE'];
+  const W=[22,16,26,20,16,16,26,20,16,16,10,24,40];
+  ws.columns=W.map(w=>({width:w}));
+  ws.mergeCells(1,1,1,H.length); const t1=ws.getCell(1,1); t1.value='CARNET DE BORD — DIRECTIQUE — Véhicule de société'; t1.font={bold:true,size:14,color:{argb:'FF14213D'}}; ws.getRow(1).height=26;
+  const hr=ws.getRow(2); H.forEach((h,i)=>{const c=hr.getCell(i+1);c.value=h;c.font={bold:true,color:{argb:'FFFFFFFF'},size:10};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF14213D'}};c.alignment={wrapText:true,vertical:'middle',horizontal:'center'};c.border=bd()}); hr.height=44;
+  list.forEach((t,i)=>{
+    const r=ws.getRow(i+3);
+    const vals=[t.nom,t.mission,t.r.lieu,utc(t.r.date,t.r.heure),num(t.r.km),gLabel(t.r.jauge),t.s.lieu,utc(t.s.date,t.s.heure),num(t.s.km),gLabel(t.s.jauge),t.s.lavage==='oui'?'Oui':t.s.lavage==='non'?'Non':'','',t.remarque||''];
+    vals.forEach((v,k)=>{const c=r.getCell(k+1);c.value=v===''?null:v;c.alignment={vertical:'middle',wrapText:true,horizontal:(k===4||k===8||k===5||k===9||k===10)?'center':'left'};c.border=bd();
+      if(k===3||k===7)c.numFmt='dd/mm/yyyy hh:mm'; if(k===4||k===8)c.numFmt='# ##0'});
+    r.height=52;
+    if(t.signature){const id=wb.addImage({base64:t.signature,extension:'png'});ws.addImage(id,{tl:{col:11.08,row:i+2.08},ext:{width:140,height:54}})}
+  });
+  ws.autoFilter={from:{row:2,column:1},to:{row:2,column:H.length}};
+  ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0};
+  const buf=await wb.xlsx.writeBuffer();
+  saveBlob(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Carnet_de_bord_Directique_${isoDate(new Date())}.xlsx`);
+  toast('Fichier Excel prêt');
+}
+function saveBlob(blob,name){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+}
+/* Sauvegarde et restauration (JSON) */
+$('bk-save').onclick=()=>saveBlob(new Blob([JSON.stringify({app:'carnet-bord-directique',version:1,trips,last})],{type:'application/json'}),`Sauvegarde_carnet_de_bord_${isoDate(new Date())}.json`);
+$('bk-load').onchange=async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  try{
+    const d=JSON.parse(await f.text()); if(d.app!=='carnet-bord-directique'||!Array.isArray(d.trips))throw 0;
+    const ids=new Set(trips.map(t=>t.id)); let n=0; d.trips.forEach(t=>{if(!ids.has(t.id)){trips.push(t);n++}});
+    if(d.last&&!last.nom)last=d.last; lsWrite(); renderList(); toast(n+' trajet(s) restauré(s)');
+  }catch(err){toast("Ce fichier n'est pas une sauvegarde valide.")}
+  e.target.value='';
+};
+function bd(){const s={style:'thin',color:{argb:'FFB9C3D3'}};return{top:s,left:s,bottom:s,right:s}}
+$('xlsx').onclick=async()=>{$('xlsx').disabled=true;try{await exportXlsx()}finally{$('xlsx').disabled=false}};
+window.addEventListener('resize',()=>{if(!$('v-form').hidden&&!drawing)sizeCanvas(true)});
+
+initStore().then(renderList);
+renderList();
+
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
